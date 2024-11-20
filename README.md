@@ -11,7 +11,7 @@
 <h2>Notes</h2>
 <ul>
 <li>Using negative edge costs is not supported</li>
-<li>A demo is available at https://mdahshan.github.io/dijkstra/</li>
+<li>A demo is available at https://moatsem-emam.github.io/Dijkstra-Implementation-js/</li>
 </ul>
 
 <h2>References</h2>
