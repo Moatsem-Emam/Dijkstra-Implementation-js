@@ -46,21 +46,27 @@
 					<input type="radio" name="radWorkMode" id="setStart" value="setStart">
 					Set Start
 				</label>
+				<label class="inputLabel" for="setEnd">
+					<input type="radio" name="radWorkMode" id="setEnd" value="setEnd">
+					Set End
+				</label>
 				
 				<label class="inputLabel" for="delVertexEdge">
 					<input type="radio" name="radWorkMode" id="delVertexEdge" value="delVertexEdge">
 					Delete vertex or edge
 				</label>
+				
 			</div>
 
 			<br>
 
 			<button class="btn" id="savesvgbutton">Save graph</button>
+			<button onclick="calculateShortPath()" class="btn" id="calcShortPath">Calculate Short Path</button>
 
 			<br>
 			<br>
-
-			<table id="dijkstraSteps"></table>
+			
+			<table id="shortestPathResult"></table>
 
 			<h2>Usage</h2>
 
