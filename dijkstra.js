@@ -45,6 +45,7 @@ saveButton.onmousedown = saveSvgFile;
 //gedge.onmousedown = mouseClick;
 //gvertex.onmousedown = mouseClick;
 
+
 function mouseClick(e) {
 
     var radWorkMode = document.getElementsByName("radWorkMode"),
@@ -109,9 +110,15 @@ function mouseClick(e) {
         case "setStart":
             if (clickTarget.nodeName == "circle") {
                 setVertexNeighbors();
-                var vertex = clickTarget;
-                vertex.isSource = true;
-                dijkstra(vertex);
+                var startTarget = clickTarget;
+                startTarget.isSource = true;
+                setStartVertex(startTarget);
+            }
+            break;
+        
+        case "setEnd":
+            if (clickTarget.nodeName == "circle") {
+                setEndVertex(clickTarget);
             }
             break;
 
@@ -119,7 +126,10 @@ function mouseClick(e) {
 
 }
 
+function calculateShortPath(){
+    dijkstra(startVertex, endVertex); // Pass both start and end vertices
 
+}
 
 function drawVertex(px, py) {
 
@@ -281,95 +291,95 @@ function clearGraph() {
     while (svg.lastChild)
         svg.removeChild(svg.lastChild);
 }
+var startVertex = null; // To store the end vertex
+function setStartVertex(vertex) {
+    if (startVertex) {
+        startVertex.setAttribute("fill", vertexColor); // Reset previous end vertex
+    }
+    startVertex = vertex;
+    vertex.setAttribute("fill", startVertexColor); // Highlight the end vertex
+}
 
-function dijkstra(source) {
-    //initialization
-    var tr = 0, round = 1;
-    table.innerHTML = "";
-    table.setAttribute("border", 1);
-    var row = table.insertRow(0);
-    var cell = row.insertCell(0);
-    cell.innerHTML = "Round";
-
-    setVertexNeighbors();
-
-    for (i = 0; i < vertices.length; i++) {
-        vertices[i].cost = INF;
-        vertices[i].previous = null;
-        vertices[i].marked = false;
-        vertices[i].markedRound = INF;
-
-        //interface begin
-        cell = row.insertCell(i + 1);
-        cell.innerHTML = vertices[i].label;
-        if (vertices[i] == source)
-            vertices[i].setAttribute("fill", startVertexColor);
-        else
-            vertices[i].setAttribute("fill", vertexColor);
-
-        //interface end
+var endVertex = null; // To store the end vertex
+function setEndVertex(vertex) {
+    if (endVertex) {
+        endVertex.setAttribute("fill", vertexColor); // Reset previous end vertex
+    }
+    endVertex = vertex;
+    vertex.setAttribute("fill", "red"); // Highlight the end vertex
+}
+function dijkstra(source, destination) {
+    if (!destination) {
+        alert("Please set an End vertex before running the algorithm.");
+        return;
     }
 
-    markedVertices = [];
+    // Initialization
+    for (let vertex of vertices) {
+        vertex.cost = INF;
+        vertex.previous = null;
+        vertex.marked = false;
+        vertex.setAttribute("fill", vertexColor); // Reset vertex color
+    }
+
     source.cost = 0;
+    
 
-    //interface begin
-    tr++;
-    row = table.insertRow(tr);
-    cell = row.insertCell(0);
-    cell.innerHTML = round;
-    for (i = 0; i < vertices.length; i++) {
-        cell = row.insertCell(i + 1);
-        cell.innerHTML = (vertices[i].cost == INF) ? '∞' : vertices[i].cost;
-        cell.innerHTML += ', ' + ((vertices[i].previous == null) ? '-' : vertices[i].previous.label);
-    }
-    //interface end
+    let unvisited = Array.from(vertices);
 
-    do {
-        //find vertex with minimum cost
-        var min = INF;
+    while (unvisited.length > 0) {
+        // Find the unvisited vertex with the smallest cost
+        let current = unvisited.reduce((min, vertex) =>
+            vertex.cost < min.cost ? vertex : min
+        );
 
-        for (i = 0; i < vertices.length; i++)
-            if (vertices[i].cost < min && !vertices[i].marked) {
-                m = i; min = vertices[m].cost;
-            }
+        if (current === destination) break; // Stop if we reach the destination
 
-        vertices[m].marked = true; vertices[m].markedRound = round;
-        markedVertices.push(vertices[m]);
-        //relax edges
-        for (j = 0; j < vertices[m].edges.length; j++) {
-            neighbor = (vertices[m].edges[j].fromVertex == vertices[m]) ? vertices[m].edges[j].toVertex : neighbor = vertices[m].edges[j].fromVertex;
-            edge = vertices[m].edges[j];
+        // Relax edges
+        for (let edge of current.edges) {
+            let neighbor =
+                edge.fromVertex === current ? edge.toVertex : edge.fromVertex;
 
-            if (neighbor.cost > vertices[m].cost + edge.cost) {
-                neighbor.cost = vertices[m].cost + edge.cost;
-                neighbor.previous = vertices[m];
-            }
-        }
-
-        //interface begin
-        tr++; round++;
-        if (markedVertices.length < vertices.length) {
-            row = table.insertRow(tr);
-            cell = row.insertCell(0);
-            cell.innerHTML = round;
-
-            for (i = 0; i < vertices.length; i++) {
-                cell = row.insertCell(i + 1);
-                if (vertices[i].markedRound > round) {
-                    cell.innerHTML = (vertices[i].cost == INF) ? '∞' : vertices[i].cost;
-                    cell.innerHTML += ', ' + ((vertices[i].previous == null) ? '-' : vertices[i].previous.label);
+            if (!neighbor.marked) {
+                let newCost = current.cost + edge.cost;
+                if (newCost < neighbor.cost) {
+                    neighbor.cost = newCost;
+                    neighbor.previous = current;
                 }
             }
         }
-        
-        //interface end
 
-    } while (markedVertices.length < vertices.length);
+        current.marked = true;
+        unvisited = unvisited.filter(v => !v.marked);
+    }
 
-    //color tree
+    displayShortestPath(destination); // Show the final path
 }
+function displayShortestPath(destination) {
+    let resultDiv = document.getElementById("shortestPathResult");
+    resultDiv.innerHTML = ""; // Clear previous results
 
+    let path = [];
+    let current = destination;
+    let totalCost = current.cost;
+
+    while (current) {
+        path.unshift(current.label); // Build the path in reverse
+        current = current.previous;
+    }
+
+    if (path.length > 1) {
+        resultDiv.innerHTML = `
+            <h2>Shortest Path</h2>
+            <p><strong>Start Node:</strong> ${path[0]}</p>
+			<p><strong>End Node:</strong> ${path[path.length-1]}</p>
+            <p><strong>Path:</strong> ${path.join(" → ")}</p>
+            <p><strong>Total Cost:</strong> ${totalCost}</p>
+        `;
+    } else {
+        resultDiv.innerHTML = "<p>No path found.</p>";
+    }
+}
 //File save from
 function saveSvgFile() {
     var s = new XMLSerializer();
